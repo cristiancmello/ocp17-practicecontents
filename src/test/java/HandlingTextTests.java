@@ -99,16 +99,40 @@ public class HandlingTextTests {
 
     @Test
     void findingAnIndex() {
-        // TODO
+        var s = "animal";
+
+        assertThat(s.indexOf('a')).isEqualTo(0);
+        assertThat(s.indexOf("al")).isEqualTo(4);
+        assertThat(s.indexOf(0x61, 3)).isEqualTo(4);
+        assertThat(s.indexOf("y")).isEqualTo(-1);   // -1 indica indice invalido
+        assertThat(s.indexOf("al", 5)).isEqualTo(-1);
     }
 
     @Test
     void gettingASubstring() {
-        // TODO
+        var s = "animals";
+
+        assertThat(s.substring(3)).isEqualTo("mals");
+        assertThatExceptionOfType(StringIndexOutOfBoundsException.class).isThrownBy(() -> {
+            s.substring(8);
+        });
+        assertThatExceptionOfType(StringIndexOutOfBoundsException.class).isThrownBy(() -> {
+            assertThat(s.substring(3, 8)).isEqualTo("mals");
+        });
+        assertThat(s.substring(3, 3)).isEmpty();
+        assertThat(s.substring(3, 4)).isEqualTo("m");
+        assertThat(s.substring(6, 7)).isEqualTo("s");
+        assertThatExceptionOfType(StringIndexOutOfBoundsException.class).isThrownBy(() -> {
+            s.substring(4, 2);
+        });
+        assertThat(s.substring(s.indexOf('m'))).isEqualTo("mals");
     }
 
     @Test
     void adjustingCase() {
-        // TODO
+        var s = "Animals";
+
+        assertThat(s.toUpperCase()).isEqualTo("ANIMALS");
+        assertThat(s.toLowerCase()).isEqualTo("animals");
     }
 }

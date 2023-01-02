@@ -36,6 +36,7 @@ public class HandlingTextTests {
         assertThat('a' + "b").isEqualTo("ab");
         assertThat("ab" + null).isEqualTo("abnull");
         assertThat(null + "ab").isEqualTo("nullab");
+        assertThat("ab" + null + 1).isEqualTo("abnull1");
 
         int three = 3;
         String four = "4";

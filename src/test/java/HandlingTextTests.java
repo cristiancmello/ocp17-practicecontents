@@ -1,7 +1,7 @@
-
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 /**
  * Manipulate text, including text blocks, using String and StringBuilder classes.
@@ -134,5 +134,49 @@ public class HandlingTextTests {
 
         assertThat(s.toUpperCase()).isEqualTo("ANIMALS");
         assertThat(s.toLowerCase()).isEqualTo("animals");
+    }
+
+    @Test
+    void checkingForEquality() {
+        var s1 = "ABC";
+        var s2 = "aBC";
+
+        assertThat(s1.equals("abc")).isFalse();
+        assertThat(s1.equalsIgnoreCase("abc")).isTrue();
+        assertThat(s2.equalsIgnoreCase("ABC")).isTrue();
+    }
+
+    @Test
+    void searchingForSubstrings() {
+        assertThat("abc".startsWith("a")).isTrue();
+        assertThat("abc".startsWith("b")).isFalse();
+        assertThat("abc".startsWith("ab")).isTrue();
+        assertThat("abc".startsWith("abc")).isTrue();
+        assertThat("abc".endsWith("c")).isTrue();
+        assertThat("abc".endsWith("bc")).isTrue();
+        assertThat("abc".endsWith("abc")).isTrue();
+        assertThat("abc".contains("b")).isTrue();
+        assertThat("abc".contains("bc")).isTrue();
+        assertThat("abc".contains("d")).isFalse();
+        assertThat("abc".contains("a")).isEqualTo("abc".indexOf("a") != -1);
+    }
+
+    @Test
+    void replacingValues() {
+        var s = "abcabc";
+        assertThat(s.replace('b', 'B')).isEqualTo("aBcaBc");
+        assertThat(s.replace("ab", "AB")).isEqualTo("ABcABc");
+        assertThat(s.replace("d", "AB")).isEqualTo("abcabc");
+    }
+
+    @Test
+    void removingBlankSpaces() {
+        // trim => nao remove caracteres Unicode em branco
+        // strip => remove caracteres Unicode em branco
+        assertThat(" abc\t ".trim()).isEqualTo("abc");
+        assertThat(" abc\t\u2000 ".trim()).isEqualTo("abc\t\u2000").hasSize(5);
+        assertThat(" abc\t\u2000 ".strip()).isEqualTo("abc").hasSize(3);
+        assertThat(" abc\t ".stripLeading()).isEqualTo("abc\t ").hasSize(5);
+        assertThat(" abc\t ".stripTrailing()).isEqualTo(" abc").hasSize(4);
     }
 }

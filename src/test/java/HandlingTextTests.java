@@ -179,4 +179,220 @@ public class HandlingTextTests {
         assertThat(" abc\t ".stripLeading()).isEqualTo("abc\t ").hasSize(5);
         assertThat(" abc\t ".stripTrailing()).isEqualTo(" abc").hasSize(4);
     }
+
+    @Test
+    void workingWithIndentationAndNormalization() {
+        var block = """
+            a
+             b
+            c""";
+
+        var blockAsCharArray = block.toCharArray();
+        var blockCharSeqDebug = "";
+
+        for (var chr : blockAsCharArray) {
+            if (chr == '\n') chr = 'N'; // N == newline \n
+
+            blockCharSeqDebug += "[%c]".formatted(chr);
+        }
+
+        assertThat(blockCharSeqDebug).isEqualTo("[a][N][ ][b][N][c]");
+        assertThat(block.length()).isEqualTo(6);
+        assertThat(blockAsCharArray.length).isEqualTo(6);
+
+        block = block.indent(1);
+        blockAsCharArray = block.toCharArray();
+        blockCharSeqDebug = "";
+
+        for (var chr : blockAsCharArray) {
+            if (chr == '\n') chr = 'N'; // N == newline \n
+
+            blockCharSeqDebug += "[%c]".formatted(chr);
+        }
+
+        // indent(1) = + 1 whitespace + newline ao final caso não exista. Chamamos de Normalization.
+        assertThat(blockCharSeqDebug).isEqualTo("[ ][a][N][ ][ ][b][N][ ][c][N]");
+        assertThat(block.length()).isEqualTo(10);
+
+        // indent(-1) = - 1 whitespace + newline ao final caso não exista.
+        block = block.indent(-1);
+        assertThat(block.length()).isEqualTo(7);
+
+        var concat = " a\n" +
+            "  b\n" +
+            " c";
+
+        assertThat(concat.stripIndent()).isEqualTo("a\n b\nc");
+
+        /*
+         var str =
+         ......<html>
+         ...........<head></head>
+         ......</html>
+
+         se aplicar stripIndent, teremos
+
+         <html>
+         .....<head></head>
+         </html>
+
+         Observe que stripIndent remove whitespaces preservando a indentação relativa ao conteúdo. Ou seja,
+         somente os espaços mais externos à extremidade da linha.
+
+         Muito interessante que a doc oficial relata a definição do que seja considerada uma "linha".
+         Ver em https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html#stripIndent()
+
+         stripIndent() = remove indentações mais externas, normaliza linhas, sem colocar newline no final do texto.
+        */
+    }
+
+    @Test
+    void translatingEscapes() {
+        var str = "1\\t2\\n";
+
+        assertThat(str).isEqualTo("1\\t2\\n");
+        assertThat(str.translateEscapes()).isEqualTo("1\t2\n");
+    }
+
+    @Test
+    void checkingForEmptyOrBlankStrings() {
+        assertThat("   ".isEmpty()).isFalse();
+        assertThat("   ".isBlank()).isTrue();
+        assertThat("".isEmpty()).isTrue();
+        assertThat("".isBlank()).isTrue();
+    }
+
+    @Test
+    void formattingValues() {
+        var greeting = String.format("Hello %s!", "Kate");
+
+        assertThat(greeting).isEqualTo("Hello Kate!");
+
+        greeting = "Hello %s!".formatted("John");
+
+        assertThat(greeting).isEqualTo("Hello John!");
+    }
+
+    @Test
+    void usingStringBuilderClass() {
+        // Código abaixo é muito ineficiente. Teremos 27 instanciações de Strings.
+        var alpha = "";
+
+        for (char current = 'a'; current <= 'z'; current++)
+            alpha += current;
+
+        assertThat(alpha).isEqualTo("abcdefghijklmnopqrstuvwxyz");
+
+        // Com StringBuilder, nenhum objeto precisa ser criado a cada iteração do loop
+        var alphabet = new StringBuilder();
+
+        for (char current = 'a'; current <= 'z'; current++)
+            alphabet.append(current);
+
+        assertThat(alphabet.toString()).isEqualTo("abcdefghijklmnopqrstuvwxyz");
+    }
+
+    @Test
+    void mutabilityAndChaining() {
+        // Devido a mutabilidade de StringBuilder, que permite ser mais eficiente do que String,
+        // acaba exigindo mais atenção quando se faz "chaining"
+        var a = new StringBuilder("abc");
+        var b = a.append("de"); // b é referência a 'a'
+        b = b.append("f").append("g");
+
+        assertThat(a.toString()).isEqualTo("abcdefg");
+        assertThat(b.toString()).isEqualTo("abcdefg");
+    }
+
+    @Test
+    void creatingAStringBuilder() {
+        var sb1 = new StringBuilder();
+        var sb2 = new StringBuilder("animal");
+        var sb3 = new StringBuilder(10);
+
+        assertThat(sb1).hasSize(0);
+        assertThat(sb2).hasSize(6);
+        assertThat(sb3).hasSize(0); // capacity é diferente de size (length)
+        assertThat(sb3.capacity()).isEqualTo(10); // capacity é uma ideia para que o Java reserve espaço
+    }
+
+    @Test
+    void usingCommonMethodsWithStringBuilder() {
+        var sb = new StringBuilder("animals");
+        var sub = sb.substring(sb.indexOf("a"), sb.indexOf("al"));
+
+        assertThat(sb.length()).isEqualTo(7);
+        assertThat(sub)
+            .isEqualTo("anim")
+            .isInstanceOf(String.class); // substring sempre entrega um String, que é seu estado interno, nao StringBuilder
+    }
+
+    @Test
+    void appendValuesWithStringBuilder() {
+        var sb = new StringBuilder();
+
+        sb.append(1).append('-').append("c").append(true);
+
+        assertThat(sb.toString()).isEqualTo("1-ctrue");
+    }
+
+    @Test
+    void insertingDataWithStringBuilder() {
+        var sb = new StringBuilder("animal");
+
+        sb.insert(6, '-'); // animal-
+        sb.insert(0, '-'); // -animal-
+        sb.insert(4, '-'); // -ani-mal-
+
+        assertThat(sb.toString()).isEqualTo("-ani-mal-");
+    }
+
+    @Test
+    void deletingContents() {
+        final var sb = new StringBuilder("abcdef");
+
+        sb.delete(1, 3);
+
+        assertThat(sb).containsOnlyOnce("adef");
+
+        // Java dá erro caso 'sb' não seja final para uso num lambda e
+        // logo em seguida reatribua a variável com outra instancia de StringBuilder
+        assertThatExceptionOfType(StringIndexOutOfBoundsException.class).isThrownBy(() -> sb.deleteCharAt(5));
+
+        // Método delete pode ser mais flexível do que muitos outros
+        var newSb = new StringBuilder("abcdef");
+
+        newSb.delete(1, 100);
+
+        assertThat(newSb).containsOnlyOnce("a");
+    }
+
+    @Test
+    void replacingPortions() {
+        var sb = new StringBuilder("pigeon dirty");
+
+        sb.replace(3, 6, "sty");
+
+        assertThat(sb).containsOnlyOnce("pigsty dirty");
+
+        // Primeiro: replace executa um 'delete' nas posições indicadas
+        // Segundo: replace em seguida faz 'insert' nas posiçoes indicadas
+
+        sb.replace(3, 100, "");
+
+        assertThat(sb).containsOnlyOnce("pig");
+
+        // Atente-se ao fato de que replace faz um delete lógico primeiramente. Por mais que se coloque posições
+        // que extrapolem o tamanho inicial, o delete apenas apaga o que tiver existido até os limites estabelecidos
+        // Fique tranquilo, não será colocado empty strings depois com limites que extrapolem o tamanho inicial.
+    }
+
+    @Test
+    void reversing() {
+        var sb = new StringBuilder("hello world!");
+
+        sb.reverse();
+
+        assertThat(sb).containsOnlyOnce("!dlrow olleh");
+    }
 }

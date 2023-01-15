@@ -355,6 +355,10 @@ public class HandlingTextTests {
 
         assertThat(sb).containsOnlyOnce("adef");
 
+        sb.deleteCharAt(0);
+
+        assertThat(sb).containsOnlyOnce("def");
+
         // Java dá erro caso 'sb' não seja final para uso num lambda e
         // logo em seguida reatribua a variável com outra instancia de StringBuilder
         assertThatExceptionOfType(StringIndexOutOfBoundsException.class).isThrownBy(() -> sb.deleteCharAt(5));
@@ -394,5 +398,69 @@ public class HandlingTextTests {
         sb.reverse();
 
         assertThat(sb).containsOnlyOnce("!dlrow olleh");
+    }
+
+    @Test
+    void comparingEquals() {
+        var one = new StringBuilder();
+        var two = new StringBuilder();
+        var three = one.append("a");
+
+        assertThat(one == two).isFalse();  // references
+        assertThat(one == three).isTrue();
+
+        var x = "Hello World";
+        var z = "  Hello World".trim();
+
+        assertThat(x.equals(z)).isTrue();
+
+        var name = "a";
+        var builder = new StringBuilder("a");
+
+        // Não é possível compilar devido: TIPOS INCOMPATIVEIS.
+        // assertThat(name == builder).isTrue();
+    }
+
+    @Test
+    void stringOrInternPool() {
+        var x = "Hello World";
+        var y = "Hello World";
+
+        assertThat(x == y).isTrue();
+
+        var t = "Hello World";
+        var v = "   Hello World".trim();
+
+        assertThat(t == v).isFalse();
+
+        var singleString = "hello world";
+        var concat = "hello ";
+        concat += "world";
+
+        assertThat(singleString == concat).isFalse();
+
+        var w = "Hello World";
+        var u = new String("Hello World");
+
+        assertThat(w == u).isFalse();
+
+        var name = "Hello World";
+        var name2 = new String("Hello World").intern();
+
+        assertThat(name == name2).isTrue();
+
+        var first = "rat" + 1;                                 // compile-time
+        var second = "r" + "a" + "t" + 1;                      // compile-time
+        var third = "r" + "a" + "t" + new String("1");  // run-time
+
+        assertThat(first == second).isTrue();
+        assertThat(first == second.intern()).isTrue();
+        assertThat(first == third).isFalse();
+        assertThat(first == third.intern()).isTrue();
+
+        var expr1 = String.format("n1 == v1 " + "and n2 == %s", "v2");
+        var expr2 = "n1 == v1 and n2 == v2";
+
+        assertThat(expr1 == expr2).isFalse();
     }
 }
